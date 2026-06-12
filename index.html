@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f2ed">
+<title>REP.FLOW — 거북이 분양·도감 플랫폼 (모바일 MVP)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
+<style>
+/* ── "Ink Archive" 토큰 — src/app/globals.css 이식 (컨셉C 기하학 × REP.FLOW 로고 색감) ── */
+:root {
+  --background: #f4f2ed;
+  --foreground: #17150f;
+  --brand: #17150f;
+  --brand-dark: #0c0b08;
+  --brand-darker: #070605;
+  --brand-accent: #17150f;
+  --brand-accent-dark: #2e2b22;
+  --brand-tint-1: #3a362c;
+  --brand-tint-2: #232017;
+  --foam: #ece9e0;
+  --surface: #ffffff;
+  --muted: #6b675c;
+  --line: #e4e0d6;
+  --sand: #bfae8e;
+  --sand-light: #cdbd97;
+  --selected-ring: #ded6c2;
+  --available: #0f5132;
+  --reserved: #9a6b1a;
+  --sold: #8a8170;
+  --danger: #b91c1c;
+  --shadow-bar: 0 10px 28px rgba(23, 21, 15, 0.06);
+  --font-sans: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Pretendard Variable", Pretendard, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --header-h: 56px;
+  --bottomnav-h: 62px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--background);
+  /* 플라스터 질감 — 로고 바탕의 회벽 느낌. 에셋 없이 CSS 한 겹 */
+  background-image: repeating-linear-gradient(
+    95deg,
+    rgba(23, 21, 15, 0.012) 0 2px,
+    transparent 2px 7px
+  );
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: anywhere;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+::selection { background: var(--selected-ring); color: var(--foreground); }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
+img { display: block; }
+
+.font-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.01em; }
+.mono-label {
+  font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+}
+/* 다이아몬드 클립 — REP.FLOW 마크 모티프 */
+.diamond-clip { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+@keyframes soft-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.rise { animation: soft-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+
+/* ── 상단바 — REP.FLOW 락업 + 잉크 1.5px 보더 ── */
+header {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: space-between;
+  height: var(--header-h); padding: 0 16px;
+  background: rgba(244, 242, 237, 0.9); backdrop-filter: blur(8px);
+  border-bottom: 1.5px solid var(--foreground);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo .mark {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0;
+  border: 1.6px solid var(--foreground); transform: rotate(45deg);
+}
+.logo .mark span {
+  font-family: var(--font-display); font-weight: 800; font-size: 11px; line-height: 1;
+  transform: rotate(-45deg);
+}
+.logo .word { font-family: var(--font-display); font-weight: 800; font-size: 0.875rem; letter-spacing: 0.24em; }
+.header-actions { display: flex; gap: 4px; }
+.icon-btn { position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--foreground); }
+.icon-btn .badge {
+  position: absolute; top: 4px; right: 3px; min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 999px; background: var(--brand-accent); color: var(--background);
+  font-size: 0.5625rem; font-weight: 800; line-height: 16px; text-align: center;
+}
+
+/* ── 뷰 컨테이너 ── */
+main { padding: 0 0 calc(var(--bottomnav-h) + env(safe-area-inset-bottom) + 24px); }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── 정사각형 배너 — REP.FLOW 로고 (이미지 자체가 흰 배경의 900×900) ── */
+.banner {
+  position: relative; margin: 16px 16px 0; aspect-ratio: 4 / 3; overflow: hidden;
+  border-radius: 12px; border: 1.5px solid var(--foreground); background: var(--surface);
+}
+.banner img { width: 100%; height: 100%; object-fit: cover; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ── 다이아몬드 카테고리 슬라이더 ── */
+.hex-head { display: flex; align-items: baseline; justify-content: space-between; margin: 16px 16px 4px; }
+.hex-head .t { font-family: var(--font-display); font-weight: 800; font-size: 1.125rem; }
+.hex-head .mono-label { color: var(--muted); }
+.hex-scroll { position: relative; }
+.hex-track-wrap { overflow-x: auto; overflow-y: hidden; padding: 8px 16px; scrollbar-width: none; }
+.hex-track-wrap::-webkit-scrollbar { display: none; }
+.hex-track { position: relative; height: 138px; }
+.hex-item { position: absolute; width: 120px; height: 104px; filter: drop-shadow(0 4px 8px rgba(23,21,15,.18)); transition: transform .15s; }
+.hex-item:active { transform: scale(1.05); }
+.hex-item .lbl {
+  pointer-events: none; position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.hex-item .lbl span { font-size: 0.7rem; font-weight: 800; line-height: 1; color: var(--background); }
+.hex-fade { pointer-events: none; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(90deg, transparent, var(--background)); }
+
+/* ── 섹션 ── */
+section.block { margin-top: 32px; }
+section.block.tight { margin-top: 12px; }
+.sec-head { display: flex; align-items: flex-end; justify-content: space-between; margin: 0 16px 16px; }
+.sec-head .mono-label { color: var(--muted); }
+.sec-head h3 { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; margin-top: 4px; letter-spacing: -0.01em; }
+.sec-head .more { font-size: 0.875rem; font-weight: 600; color: var(--brand-accent); }
+
+/* ── 매물 카드 — 사진/이름/판매자/가격 네 가지만, 보더 기반 ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+.card {
+  position: relative; overflow: hidden; border-radius: 12px; background: var(--surface);
+  border: 1px solid var(--line); transition: border-color .2s, transform .2s;
+}
+.card.power { border-color: rgba(23, 21, 15, .4); }
+.card:active { border-color: var(--foreground); }
+.card .wish {
+  position: absolute; right: 10px; top: 10px; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 999px; font-size: 0.875rem;
+  border: 1px solid var(--line); background: rgba(255,255,255,.9); color: var(--foreground);
+}
+.card .wish.on { background: var(--brand-accent); border-color: var(--brand-accent); color: var(--background); }
+.card .ph { position: relative; aspect-ratio: 5 / 4; background: var(--foam); overflow: hidden; }
+.card .ph img { width: 100%; height: 100%; object-fit: cover; }
+.card .ph .fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--muted); }
+.card .tags { position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 52px); }
+.tag-ad { border-radius: 999px; padding: 4px 10px; font-size: 0.6875rem; font-weight: 700; background: var(--brand-accent); color: var(--background); }
+.tag-reserved { border-radius: 999px; padding: 4px 10px; font-size: 0.6875rem; font-weight: 700; border: 1px solid var(--foreground); background: rgba(244,242,237,.95); color: var(--reserved); }
+.card .body { padding: 14px; }
+.card .nm { font-size: 0.875rem; font-weight: 600; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .seller-line { margin-top: 4px; font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .price { margin-top: 8px; font-size: 1.125rem; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+
+/* ── 상태 배지 (상세·홈 전용 — 카드에선 예약중 칩만) ── */
+.status-badge { border-radius: 999px; padding: 4px 10px; font-size: 0.6875rem; font-weight: 700; color: #fff; }
+.status-badge.available { background: var(--available); }
+.status-badge.reserved { background: var(--reserved); }
+.status-badge.sold { background: var(--sold); }
+
+/* ── 커뮤니티(홈) — 가로 스냅 슬라이드, 각진 흰 카드 + 앞쪽 잉크·회색 교차 띠 ── */
+.post-slider {
+  display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden;
+  padding: 0 16px 8px; scroll-snap-type: x mandatory; scrollbar-width: none;
+}
+.post-slider::-webkit-scrollbar { display: none; }
+.post-card {
+  position: relative; width: 240px; flex-shrink: 0; scroll-snap-align: start;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line); background: var(--surface); padding: 16px 16px 16px 20px;
+}
+.post-card .stripe { position: absolute; top: 0; bottom: 0; left: 0; width: 6px; }
+.post-card .t { font-size: 0.875rem; font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.post-card .b { margin-top: 8px; font-size: 0.75rem; line-height: 1.6; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.post-card .mono-label { margin-top: 12px; color: var(--muted); }
+
+/* ── 커뮤니티(라운지) — 제목·메타 리스트 ── */
+.post-list { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 16px; }
+.post-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding: 14px 0; border-bottom: 1px solid var(--line);
+}
+.post-row:last-child { border-bottom: 0; }
+.post-row .t { font-size: 0.875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post-row .mono-label { flex-shrink: 0; color: var(--muted); }
+
+/* ── 목록 화면 ── */
+.page-head { padding: 24px 16px 0; }
+.page-head h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.625rem; margin-top: 4px; }
+.page-head .mono-label { color: var(--muted); }
+.filter-chips { display: flex; gap: 8px; overflow-x: auto; padding: 16px; scrollbar-width: none; }
+.filter-chips::-webkit-scrollbar { display: none; }
+.fchip {
+  flex-shrink: 0; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); padding: 8px 14px; font-size: 0.8125rem; font-weight: 600; color: var(--muted);
+  white-space: nowrap;
+}
+.fchip.on { background: var(--brand); border-color: var(--brand); color: var(--background); }
+.list-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 12px; }
+.list-toolbar .cnt { font-size: 0.8125rem; color: var(--muted); }
+.list-toolbar select {
+  font: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--foreground);
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 6px 8px;
+}
+
+/* ── 상세 화면 ── */
+.back-row { padding: 16px; }
+.back-row button { font-size: 0.875rem; color: var(--muted); }
+.gallery-main { position: relative; aspect-ratio: 4 / 3; background: var(--foam); overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px 16px 0; }
+.thumbs button { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 8px; opacity: .75; }
+.thumbs button img { width: 100%; height: 100%; object-fit: cover; }
+.thumbs button.on { opacity: 1; box-shadow: 0 0 0 2px var(--selected-ring); }
+.detail-info { padding: 20px 16px 0; }
+.detail-info .top-row { display: flex; align-items: center; justify-content: space-between; }
+.detail-info .top-row .mono-label { color: var(--muted); }
+.detail-info h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; line-height: 1.25; margin-top: 12px; letter-spacing: -0.02em; }
+.detail-info .seller-line { margin-top: 6px; font-size: 0.8125rem; color: var(--muted); }
+.spec-table { margin-top: 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
+.spec-table .row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 0.875rem; }
+.spec-table .row:last-child { border-bottom: 0; }
+.spec-table .row .k { color: var(--muted); flex-shrink: 0; }
+.spec-table .row .v { font-weight: 600; text-align: right; }
+.detail-desc { margin-top: 16px; font-size: 0.875rem; line-height: 1.7; color: var(--muted); }
+.detail-price { margin-top: 24px; display: flex; align-items: baseline; gap: 8px; }
+.detail-price .p { font-family: var(--font-display); font-weight: 800; font-size: 1.75rem; letter-spacing: -0.02em; }
+.detail-price .mono-label { color: var(--muted); }
+.detail-ctas { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 16px; }
+.btn { display: block; border-radius: 999px; padding: 15px 20px; text-align: center; font-size: 0.9375rem; font-weight: 700; transition: background .15s; }
+.btn-accent { background: var(--brand-accent); color: var(--background); }
+.btn-accent:active { background: var(--brand-accent-dark); }
+.detail-ctas .btn[disabled] { background: var(--foam); color: var(--muted); }
+.detail-ctas .wish-lg {
+  display: flex; align-items: center; justify-content: center; width: 54px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line); font-size: 1.125rem;
+}
+.detail-ctas .wish-lg.on { background: var(--brand-accent); border-color: var(--brand-accent); color: var(--background); }
+.seller-card { margin: 24px 16px 0; border-radius: 12px; background: var(--surface); padding: 16px; border: 1px solid var(--line); }
+.seller-card .row1 { display: flex; align-items: center; justify-content: space-between; }
+.seller-card .nm { font-weight: 700; font-size: 0.9375rem; }
+.seller-card .rate { font-weight: 600; font-size: 0.8125rem; color: var(--brand-accent-dark); }
+.seller-card .loc { margin-top: 4px; font-size: 0.8125rem; color: var(--muted); }
+
+/* ── 검색 ── */
+.search-bar { display: flex; gap: 8px; padding: 16px; }
+.search-bar input {
+  flex: 1; font: inherit; font-size: 0.9375rem; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); padding: 13px 16px; color: var(--foreground); outline: none;
+}
+.search-bar input:focus { border-color: var(--foreground); }
+.hot-keywords { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px; }
+.empty { padding: 56px 24px; text-align: center; }
+.empty .t { font-family: var(--font-display); font-weight: 800; font-size: 1.125rem; }
+.empty .d { margin-top: 8px; font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
+
+/* ── 마이 ── */
+.account-hero { margin: 16px; border-radius: 12px; background: var(--brand-darker); padding: 24px 20px; position: relative; overflow: hidden; }
+.account-hero .diamonds { position: absolute; top: -12px; right: 12px; display: flex; gap: 8px; opacity: .7; }
+.account-hero .diamonds span { width: 48px; height: 48px; }
+.account-hero .mono-label { color: var(--sand-light); position: relative; }
+.account-hero .t { color: var(--background); font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; margin-top: 10px; position: relative; }
+.account-hero .d { color: rgba(244,242,237,.85); font-size: 0.8125rem; line-height: 1.6; margin-top: 8px; position: relative; }
+.menu-list { margin: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
+.menu-list button { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 16px; font-size: 0.9375rem; font-weight: 600; border-bottom: 1px solid var(--line); text-align: left; }
+.menu-list button:last-child { border-bottom: 0; }
+.menu-list button .arr { color: var(--muted); }
+
+/* ── 하단 탭 ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 50;
+  width: 100%; max-width: 480px;
+  background: rgba(255,255,255,.95); backdrop-filter: blur(8px);
+  box-shadow: 0 -12px 32px rgba(23,21,15,.08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav ul { display: flex; list-style: none; }
+.bottom-nav li { flex: 1; }
+.bottom-nav a {
+  position: relative; display: flex; min-height: 62px; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  font-size: 0.6875rem; font-weight: 600; color: var(--muted);
+}
+.bottom-nav a.on { color: var(--brand-accent-dark); }
+.bottom-nav a .ind { display: none; position: absolute; left: 50%; top: 6px; width: 6px; height: 6px; transform: translateX(-50%); background: var(--sand); }
+.bottom-nav a.on .ind { display: block; }
+
+/* ── 토스트 ── */
+#toast {
+  position: fixed; bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom) + 16px);
+  left: 50%; transform: translateX(-50%) translateY(8px); z-index: 60;
+  max-width: calc(100% - 48px); border-radius: 999px;
+  background: var(--brand-darker); color: var(--background); padding: 11px 20px;
+  font-size: 0.8125rem; font-weight: 600; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+  box-shadow: 0 16px 40px rgba(23, 21, 15, 0.16);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="#/" class="logo" aria-label="렙플로우 — 거북이 분양·도감 플랫폼 홈">
+    <span class="mark" aria-hidden="true"><span>R</span></span>
+    <span class="word">REP.FLOW</span>
+  </a>
+  <div class="header-actions">
+    <a href="#/search" class="icon-btn" aria-label="검색">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.5-4.5"/></svg>
+    </a>
+    <button class="icon-btn" id="cart-btn" aria-label="장바구니">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.2l2.4 11.4a1.6 1.6 0 0 0 1.6 1.3h8.5a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/><circle cx="9.5" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/></svg>
+      <span class="badge" id="cart-badge" hidden>0</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div id="view-home" class="view"></div>
+  <div id="view-listings" class="view"></div>
+  <div id="view-detail" class="view"></div>
+  <div id="view-search" class="view"></div>
+  <div id="view-board" class="view"></div>
+  <div id="view-account" class="view"></div>
+</main>
+
+<nav class="bottom-nav" aria-label="하단 탭">
+  <ul>
+    <li><a href="#/" data-tab="home"><span class="ind diamond-clip"></span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>홈</a></li>
+    <li><a href="#/listings" data-tab="listings"><span class="ind diamond-clip"></span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 4.5v9L12 21l-7.5-4.5v-9L12 3Z"/></svg>분양</a></li>
+    <li><a href="#/search" data-tab="search"><span class="ind diamond-clip"></span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.5-4.5"/></svg>검색</a></li>
+    <li><a href="#/board" data-tab="board"><span class="ind diamond-clip"></span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-4 4V5.5Z"/></svg>라운지</a></li>
+    <li><a href="#/account" data-tab="account"><span class="ind diamond-clip"></span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"/></svg>마이</a></li>
+  </ul>
+</nav>
+
+<div id="toast" role="status"></div>
+
+<script>
+/* ════ 데이터 — src/lib/mock 시드 이식 ════ */
+const SELLERS = {
+  s1: { name: "테라핀하우스", location: "경기 고양", rating: 4.8 },
+  s2: { name: "초록등껍질", location: "서울 강서", rating: 4.6 },
+  s3: { name: "거북섬", location: "인천 서구", rating: 4.3 },
+  s4: { name: "워터펀드", location: "부산 해운대", rating: 4.9 },
+  s5: { name: "머드앤문", location: "대전 유성", rating: 4.5 },
+};
+
+/* 종별 사진 블록 — public/turtles 는 종별 연속 배치 (다이아몬드백 01~05, 비단 06~10, 노랑배 11~15, 지도 16~20, 머스크 21~26) */
+const PHOTO_BLOCKS = {
+  "다이아몬드백 테라핀": { start: 1, size: 5 },
+  "비단거북": { start: 6, size: 5 },
+  "노랑배 거북": { start: 11, size: 5 },
+  "지도거북": { start: 16, size: 5 },
+  "머스크 거북": { start: 21, size: 6 },
+};
+function pics(species, seq, count) {
+  const b = PHOTO_BLOCKS[species];
+  return Array.from({ length: count }, (_, i) => {
+    const n = b.start + ((seq + i) % b.size);
+    return "turtles/turtle-" + String(n).padStart(2, "0") + ".jpg";
+  });
+}
+
+const SEX = { male: "수컷", female: "암컷", unsexed: "미구분" };
+const SIZE = { baby: "베이비", juvenile: "유체", subadult: "준성체", adult: "성체" };
+const STATUS = { available: "상담 가능", reserved: "예약중", sold: "판매 완료" };
+
+const LISTINGS = [
+  { id: "L01", name: "다이아몬드백 펄 베이비 #1", species: "다이아몬드백 테라핀", morph: "펄", sex: "unsexed", sizeClass: "baby", scl: 3.4, lineage: "2025 자가번식 라인 A", price: 280000, status: "available", photos: pics("다이아몬드백 테라핀", 0, 3), sellerId: "s1", desc: "올해 부화한 펄 모프 베이비입니다. 식욕 좋고 활발합니다." },
+  { id: "L02", name: "다이아몬드백 노멀 준성체", species: "다이아몬드백 테라핀", morph: "노멀", sex: "female", sizeClass: "subadult", scl: 11.2, lineage: "혈통 미상(분양 입양 개체)", price: 190000, status: "available", photos: pics("다이아몬드백 테라핀", 1, 2), sellerId: "s1", desc: "성장 잘 된 암컷 준성체. 핸들링에 익숙합니다." },
+  { id: "L04", name: "다이아몬드백 하이포 베이비", species: "다이아몬드백 테라핀", morph: "하이포", sex: "unsexed", sizeClass: "baby", scl: 3.8, lineage: "워터펀드 하이포 프로젝트", price: 520000, status: "available", photos: pics("다이아몬드백 테라핀", 3, 3), sellerId: "s4", power: true, desc: "하이포 발색이 또렷한 라인 관리 개체. 실측 기록을 제공합니다." },
+  { id: "L05", name: "다이아몬드백 펄 준성체 암컷", species: "다이아몬드백 테라핀", morph: "펄", sex: "female", sizeClass: "subadult", scl: 10.5, lineage: "2025 자가번식 라인 A", price: 640000, status: "reserved", photos: pics("다이아몬드백 테라핀", 4, 3), sellerId: "s1", desc: "펄 발색이 안정된 준성체 암컷. 현재 예약 상담이 진행 중입니다." },
+  { id: "L06", name: "다이아몬드백 카라멜 베이비", species: "다이아몬드백 테라핀", morph: "카라멜", sex: "unsexed", sizeClass: "baby", scl: 3.6, lineage: "워터펀드 카라멜 라인", price: 380000, status: "available", photos: pics("다이아몬드백 테라핀", 2, 3), sellerId: "s4", desc: "카라멜 톤이 고운 베이비. 먹이 반응 빠릅니다." },
+  { id: "L07", name: "다이아몬드백 노멀 성체 수컷", species: "다이아몬드백 테라핀", morph: "노멀", sex: "male", sizeClass: "adult", scl: 13.1, lineage: "혈통 미상", price: 230000, status: "available", photos: pics("다이아몬드백 테라핀", 1, 2), sellerId: "s1", desc: "건강한 성체 수컷. 브리딩 참여 이력이 있습니다." },
+  { id: "L09", name: "남부비단거북 베이비", species: "비단거북", morph: "노멀", sex: "unsexed", sizeClass: "baby", scl: 3.1, lineage: "초록등껍질 2025 클러치", price: 85000, status: "available", photos: pics("비단거북", 0, 3), sellerId: "s2", desc: "입문용으로 좋은 남부비단 베이비. 무리 사육 중입니다." },
+  { id: "L10", name: "남부비단거북 유체", species: "비단거북", morph: "노멀", sex: "female", sizeClass: "juvenile", scl: 6.4, lineage: "초록등껍질 2024 클러치", price: 110000, status: "available", photos: pics("비단거북", 1, 2), sellerId: "s2", desc: "성비 확인된 암컷 유체. 발색 진행 중입니다." },
+  { id: "L12", name: "비단거북 하이포 베이비", species: "비단거북", morph: "하이포", sex: "unsexed", sizeClass: "baby", scl: 3.2, lineage: "초록등껍질 하이포 셀렉트", price: 240000, status: "available", photos: pics("비단거북", 3, 3), sellerId: "s2", power: true, desc: "셀렉트 라인 하이포 베이비. 등갑 패턴이 선명합니다." },
+  { id: "L13", name: "노랑배 거북 베이비", species: "노랑배 거북", morph: "노멀", sex: "unsexed", sizeClass: "baby", scl: 3.3, lineage: "거북섬 2025 클러치", price: 70000, status: "available", photos: pics("노랑배 거북", 0, 3), sellerId: "s3", desc: "활발한 노랑배 베이비. 인공사료 적응 완료." },
+  { id: "L16", name: "미시시피 지도거북 유체", species: "지도거북", morph: "노멀", sex: "female", sizeClass: "juvenile", scl: 5.8, lineage: "머드앤문 2024 클러치", price: 160000, status: "available", photos: pics("지도거북", 0, 3), sellerId: "s5", desc: "킬 라인이 살아있는 지도거북 유체. 수질 적응이 빠릅니다." },
+  { id: "L21", name: "커먼 머스크 베이비", species: "머스크 거북", morph: "노멀", sex: "unsexed", sizeClass: "baby", scl: 2.9, lineage: "머드앤문 2025 클러치", price: 95000, status: "available", photos: pics("머스크 거북", 0, 3), sellerId: "s5", desc: "소형종 입문으로 좋은 커먼 머스크. 저면 활동성이 좋습니다." },
+];
+
+const POSTS = [
+  { id: "p1", title: "테라핀하우스에서 펄 베이비 분양받았어요!", body: "고민 끝에 펄 베이비 데려왔습니다. 포장도 꼼꼼했고 실물이 사진보다 예뻐요. 먹이 반응 영상도 분양 전에 보내주셔서 믿음이 갔습니다.", date: "2026년 5월 17일", comments: 2, likes: 24 },
+  { id: "p2", title: "비단거북 베이비 사육 환경 공유합니다", body: "60큐브에 저면여과 + 스팟램프 구성입니다. 수온 26도 유지하고 있고, 바스킹 자리를 두 군데로 나눠줬더니 경쟁이 줄었어요.", date: "2026년 5월 15일", comments: 1, likes: 31 },
+  { id: "p3", title: "노랑배 거북 분양 후기 (거북섬)", body: "거북섬에서 노랑배 베이비 데려온 지 한 달 됐습니다. 도착 당일부터 먹이 반응이 좋았고 현재 등갑 4cm 돌파했어요.", date: "2026년 5월 12일", comments: 0, likes: 12 },
+];
+
+const HEX_CATEGORIES = [
+  { slug: null, name: "전체", label: "전체" },
+  { slug: "diamondback-terrapin", name: "다이아몬드백 테라핀", label: "다이아몬드백" },
+  { slug: "painted-turtle", name: "비단거북", label: "비단거북" },
+  { slug: "yellow-bellied-slider", name: "노랑배 거북", label: "노랑배" },
+  { slug: "map-turtle", name: "지도거북", label: "지도거북" },
+  { slug: "musk-turtle", name: "머스크 거북", label: "머스크" },
+];
+/* 잉크 톤램프 — 토큰만 참조해 팔레트 교체 시 함께 따라온다 */
+const HEX_FILLS = ["var(--brand-accent)", "var(--brand)", "var(--brand-tint-1)", "var(--brand-accent-dark)", "var(--brand-tint-2)", "var(--brand)"];
+/* 다이아몬드(REP.FLOW 마크) — 45° 회전 사각, 컨셉C 육각에서 로고 모티프로 교체 */
+const DIAMOND_POINTS = "46,0 92,40 46,80 0,40";
+
+/* ════ 상태 (메모리 — 새로고침 시 리셋) ════ */
+const state = { wishlist: new Set(), cart: new Set(), species: null, sort: "latest", query: "", photoIdx: 0 };
+
+/* ════ 헬퍼 ════ */
+const fmtPrice = (n) => n.toLocaleString("ko-KR") + "원";
+/* 개체 id("L01") → 도감 카탈로그 넘버("01"). 한 자리 순번도 2자리로 패딩 */
+const catalogNo = (id) => { const d = id.replace(/\D/g, ""); return d ? d.padStart(2, "0") : id; };
+const sellerOf = (l) => SELLERS[l.sellerId];
+const publicListings = () => LISTINGS.filter((l) => l.status !== "sold");
+/* AD 매물은 별도 섹션 없이 그리드 맨 앞에 섞고 카드 배지로만 구분한다 */
+const orderedListings = (arr) => [...arr.filter((l) => l.power), ...arr.filter((l) => !l.power)];
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+/* ════ 렌더러 ════ */
+function statusBadge(l) { return `<span class="status-badge ${l.status}">${STATUS[l.status]}</span>`; }
+
+/* 매물 카드 — 사진 / 이름 / 주인·주소 / 가격 네 가지만 보여준다 */
+function cardHTML(l) {
+  const s = sellerOf(l);
+  const wished = state.wishlist.has(l.id);
+  return `
+  <div class="card${l.power ? " power" : ""}">
+    <button class="wish${wished ? " on" : ""}" data-wish="${l.id}" aria-label="위시리스트">${wished ? "♥" : "♡"}</button>
+    <a href="#/listings/${l.id}">
+      <div class="ph">
+        <img src="${l.photos[0]}" alt="${l.name}" loading="lazy" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('afterbegin','<span class=fallback>${l.species}</span>')">
+        <div class="tags">
+          ${l.power ? `<span class="tag-ad">AD 파워회원</span>` : ""}
+          ${l.status === "reserved" ? `<span class="tag-reserved">예약중</span>` : ""}
+        </div>
+      </div>
+      <div class="body">
+        <p class="nm">${l.name}</p>
+        <p class="seller-line">${s.name} · ${s.location}</p>
+        <p class="price">${fmtPrice(l.price)}</p>
+      </div>
+    </a>
+  </div>`;
+}
+
+function diamondSliderHTML() {
+  /* 130% 확대 — 92×80(스텝 80.5) 기하를 1.3배 */
+  const STEP = 105, W = 120, H = 104;
+  const trackW = (HEX_CATEGORIES.length - 1) * STEP + W;
+  const items = HEX_CATEGORIES.map((c, i) => {
+    const left = i * STEP, top = i % 2 === 0 ? 8 : 34;
+    const href = c.slug === null ? "#/listings" : "#/listings?species=" + encodeURIComponent(c.name);
+    return `
+    <a class="hex-item" href="${href}" style="left:${left}px;top:${top}px" aria-label="${c.name}">
+      <svg width="${W}" height="${H}" viewBox="0 0 92 80" aria-hidden="true"><polygon points="${DIAMOND_POINTS}" fill="${HEX_FILLS[i % HEX_FILLS.length]}"/></svg>
+      <span class="lbl">
+        <svg width="30" height="19" viewBox="0 0 30 19" aria-hidden="true" style="opacity:.9"><ellipse cx="11" cy="10" rx="9.5" ry="6" fill="var(--selected-ring)"/><circle cx="23" cy="7.5" r="3" fill="var(--selected-ring)"/></svg>
+        <span>${c.label}</span>
+      </span>
+    </a>`;
+  }).join("");
+  return `
+  <div class="hex-head"><span class="t">종으로 둘러보기</span><span class="mono-label">옆으로 밀어보세요 →</span></div>
+  <div class="hex-scroll">
+    <div class="hex-track-wrap"><div class="hex-track" style="width:${trackW}px">${items}</div></div>
+    <div class="hex-fade"></div>
+  </div>`;
+}
+
+function renderHome() {
+  const sale = orderedListings(publicListings()).slice(0, 8);
+  document.getElementById("view-home").innerHTML = `
+  <section class="rise">
+    <div class="banner">
+      <h1 class="sr-only">테라핀 — 거북이 분양·도감 플랫폼</h1>
+      <img src="repflow-banner.png" alt="REP.FLOW">
+    </div>
+    ${diamondSliderHTML()}
+  </section>
+  <section class="block tight rise" style="animation-delay:.05s">
+    <div class="sec-head">
+      <div><p class="mono-label">For Sale</p><h3>판매 중인 거북이</h3></div>
+      <a class="more" href="#/listings">전체 보기 →</a>
+    </div>
+    <div class="grid2">${sale.map(cardHTML).join("")}</div>
+  </section>
+  <section class="block rise" style="animation-delay:.1s">
+    <div class="sec-head">
+      <div><p class="mono-label">Community</p><h3>사육 경험과 분양후기</h3></div>
+      <a class="more" href="#/board">분양후기 →</a>
+    </div>
+    <div class="post-slider">${POSTS.map(postCardHTML).join("")}</div>
+  </section>`;
+}
+
+/* 커뮤니티(홈) — 가로 슬라이드 카드, 앞쪽 잉크·회색 교차 띠 */
+function postCardHTML(p, i) {
+  return `
+  <a class="post-card" href="#/board">
+    <span class="stripe" aria-hidden="true" style="background:${i % 2 === 0 ? "var(--foreground)" : "var(--muted)"}"></span>
+    <p class="t">${p.title}</p>
+    <p class="b">${p.body}</p>
+    <span class="mono-label">${p.date.replace("2026년 ", "")} · 댓글 ${p.comments}</span>
+  </a>`;
+}
+
+function sortListings(arr) {
+  const a = [...arr];
+  if (state.sort === "priceAsc") a.sort((x, y) => x.price - y.price);
+  else if (state.sort === "priceDesc") a.sort((x, y) => y.price - x.price);
+  return a;
+}
+
+function renderListings() {
+  let items = publicListings();
+  if (state.species) items = items.filter((l) => l.species === state.species);
+  items = state.sort === "latest" ? orderedListings(items) : sortListings(items);
+  const chips = HEX_CATEGORIES.map((c) => {
+    const on = (c.slug === null && !state.species) || c.name === state.species;
+    return `<button class="fchip${on ? " on" : ""}" data-species="${c.slug === null ? "" : c.name}">${c.label}</button>`;
+  }).join("");
+  document.getElementById("view-listings").innerHTML = `
+  <div class="rise">
+    <div class="page-head"><p class="mono-label">Catalog</p><h2>분양 목록</h2></div>
+    <div class="filter-chips">${chips}</div>
+    <div class="list-toolbar">
+      <span class="cnt">분양 가능 개체 ${items.length}건</span>
+      <select id="sort-select" aria-label="정렬">
+        <option value="latest"${state.sort === "latest" ? " selected" : ""}>최신순</option>
+        <option value="priceAsc"${state.sort === "priceAsc" ? " selected" : ""}>가격 낮은순</option>
+        <option value="priceDesc"${state.sort === "priceDesc" ? " selected" : ""}>가격 높은순</option>
+      </select>
+    </div>
+    ${items.length ? `<div class="grid2">${items.map(cardHTML).join("")}</div>`
+      : `<div class="empty"><p class="t">조건에 맞는 개체가 없어요</p><p class="d">필터를 조정하거나 초기화해 보세요.</p></div>`}
+  </div>`;
+  const sel = document.getElementById("sort-select");
+  if (sel) sel.addEventListener("change", () => { state.sort = sel.value; renderListings(); });
+}
+
+function renderDetail(id) {
+  const l = LISTINGS.find((x) => x.id === id);
+  const v = document.getElementById("view-detail");
+  if (!l) {
+    v.innerHTML = `<div class="empty rise"><p class="t">개체를 찾을 수 없습니다</p><p class="d">목록에서 다시 선택해주세요.</p></div>`;
+    return;
+  }
+  const s = sellerOf(l);
+  const idx = Math.min(state.photoIdx, l.photos.length - 1);
+  const wished = state.wishlist.has(l.id);
+  const inCart = state.cart.has(l.id);
+  const ctaLabel = l.status === "sold" ? "판매 완료" : l.status === "reserved" ? "대기 문의 남기기" : inCart ? "장바구니에 담김" : "장바구니 담기";
+  v.innerHTML = `
+  <div class="rise">
+    <div class="back-row"><button data-back>← 분양 목록</button></div>
+    <div class="gallery-main"><img src="${l.photos[idx]}" alt="${l.name}"></div>
+    ${l.photos.length > 1 ? `<div class="thumbs">${l.photos.map((p, i) =>
+      `<button class="${i === idx ? "on" : ""}" data-photo="${i}" aria-label="사진 ${i + 1}번"><img src="${p}" alt=""></button>`).join("")}</div>` : ""}
+    <div class="detail-info">
+      <div class="top-row"><span class="mono-label">No. ${catalogNo(l.id)}</span>${statusBadge(l)}</div>
+      <h2>${l.name}</h2>
+      <p class="seller-line">${s.name} · ${s.location}</p>
+      <div class="spec-table">
+        <div class="row"><span class="k">종</span><span class="v">${l.species}</span></div>
+        <div class="row"><span class="k">모프</span><span class="v">${l.morph}</span></div>
+        <div class="row"><span class="k">성별</span><span class="v">${SEX[l.sex]}</span></div>
+        <div class="row"><span class="k">크기</span><span class="v">${SIZE[l.sizeClass]} · 등갑 ${l.scl}cm</span></div>
+        <div class="row"><span class="k">혈통</span><span class="v">${l.lineage}</span></div>
+      </div>
+      <p class="detail-desc">${l.desc}</p>
+      <div class="detail-price"><span class="p">${fmtPrice(l.price)}</span><span class="mono-label">상담 예약가</span></div>
+      <div class="detail-ctas">
+        <button class="btn btn-accent" data-cart="${l.id}" ${l.status === "sold" || inCart ? "disabled" : ""}>${ctaLabel}</button>
+        <button class="wish-lg${wished ? " on" : ""}" data-wish="${l.id}" aria-label="위시리스트">${wished ? "♥" : "♡"}</button>
+      </div>
+    </div>
+    <div class="seller-card">
+      <div class="row1"><span class="nm">${s.name}</span><span class="rate">★ ${s.rating.toFixed(1)}</span></div>
+      <p class="loc">${s.location} · 브리더 직접 분양</p>
+    </div>
+  </div>`;
+}
+
+function renderSearch() {
+  const q = state.query.trim();
+  const results = q
+    ? publicListings().filter((l) => (l.name + l.species + l.morph).includes(q))
+    : [];
+  document.getElementById("view-search").innerHTML = `
+  <div class="rise">
+    <div class="search-bar"><input id="search-input" type="search" placeholder="종 · 모프 · 개체명 검색" value="${q.replace(/"/g, "&quot;")}" enterkeyhint="search"></div>
+    <div class="hot-keywords">${["펄", "베이비", "하이포", "비단거북"].map((k) => `<button class="fchip" data-keyword="${k}">${k}</button>`).join("")}</div>
+    ${q === "" ? `<div class="empty"><p class="t">무엇을 찾으세요?</p><p class="d">종 이름이나 모프, 개체명으로 검색해보세요.</p></div>`
+      : results.length ? `<div class="list-toolbar" style="padding-top:8px"><span class="cnt">"${q}" 결과 ${results.length}개체</span></div><div class="grid2">${results.map(cardHTML).join("")}</div>`
+      : `<div class="empty"><p class="t">"${q}" 검색 결과가 없습니다</p><p class="d">다른 키워드로 다시 검색해보세요.</p></div>`}
+  </div>`;
+  const input = document.getElementById("search-input");
+  input.addEventListener("input", () => {
+    state.query = input.value;
+    clearTimeout(input._t);
+    input._t = setTimeout(() => { renderSearch(); document.getElementById("search-input").focus(); }, 350);
+  });
+}
+
+function renderBoard() {
+  document.getElementById("view-board").innerHTML = `
+  <div class="rise">
+    <div class="page-head"><p class="mono-label">Lounge</p><h2>라운지</h2></div>
+    <div class="post-list" style="margin-top:16px">${POSTS.map((p) => `
+      <a class="post-row" href="#/board" style="flex-direction:column;align-items:stretch;gap:6px">
+        <p class="t" style="white-space:normal">${p.title}</p>
+        <p style="font-size:.8125rem;line-height:1.6;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.body}</p>
+        <span class="mono-label" style="color:var(--muted)">${p.date} · 댓글 ${p.comments} · ♥ ${p.likes}</span>
+      </a>`).join("")}</div>
+  </div>`;
+}
+
+function renderAccount() {
+  document.getElementById("view-account").innerHTML = `
+  <div class="rise">
+    <div class="account-hero">
+      <div class="diamonds" aria-hidden="true"><span class="diamond-clip" style="background:var(--brand-tint-1)"></span><span class="diamond-clip" style="background:var(--sand);opacity:.5;margin-top:24px"></span></div>
+      <p class="mono-label">Guest</p>
+      <p class="t">로그인 없이 둘러보는 중</p>
+      <p class="d">프로토타입에서는 회원 기능이 모의로 동작합니다.<br>위시리스트 ${state.wishlist.size}개 · 장바구니 ${state.cart.size}개</p>
+    </div>
+    <div class="menu-list">
+      ${["주문 내역", "위시리스트", "판매자 입점 안내", "공지사항"].map((m) => `<button data-menu="${m}"><span>${m}</span><span class="arr">›</span></button>`).join("")}
+    </div>
+  </div>`;
+}
+
+/* ════ 라우터 ════ */
+const VIEWS = ["home", "listings", "detail", "search", "board", "account"];
+function route() {
+  const hash = location.hash || "#/";
+  let view = "home", tab = "home";
+  const detail = hash.match(/^#\/listings\/(\w+)/);
+  if (detail) { view = "detail"; tab = "listings"; state.photoIdx = 0; renderDetail(detail[1]); }
+  else if (hash.startsWith("#/listings")) {
+    view = tab = "listings";
+    const sp = hash.match(/species=([^&]+)/);
+    state.species = sp ? decodeURIComponent(sp[1]) : null;
+    renderListings();
+  }
+  else if (hash.startsWith("#/search")) { view = tab = "search"; renderSearch(); }
+  else if (hash.startsWith("#/board")) { view = tab = "board"; renderBoard(); }
+  else if (hash.startsWith("#/account")) { view = tab = "account"; renderAccount(); }
+  else { renderHome(); }
+  VIEWS.forEach((v) => document.getElementById("view-" + v).classList.toggle("active", v === view));
+  document.querySelectorAll(".bottom-nav a").forEach((a) => a.classList.toggle("on", a.dataset.tab === tab));
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+
+/* ════ 이벤트 (위임) ════ */
+function updateCartBadge() {
+  const b = document.getElementById("cart-badge");
+  b.hidden = state.cart.size === 0;
+  b.textContent = state.cart.size;
+}
+document.addEventListener("click", (e) => {
+  const wishBtn = e.target.closest("[data-wish]");
+  if (wishBtn) {
+    e.preventDefault();
+    const id = wishBtn.dataset.wish;
+    const on = state.wishlist.has(id);
+    if (on) state.wishlist.delete(id); else state.wishlist.add(id);
+    document.querySelectorAll(`[data-wish="${id}"]`).forEach((b) => {
+      b.classList.toggle("on", !on);
+      b.textContent = on ? "♡" : "♥";
+    });
+    toast(on ? "위시리스트에서 제거했습니다" : "위시리스트에 추가했습니다");
+    return;
+  }
+  const cartBtn = e.target.closest("[data-cart]");
+  if (cartBtn && !cartBtn.disabled) {
+    const id = cartBtn.dataset.cart;
+    const l = LISTINGS.find((x) => x.id === id);
+    if (l.status === "reserved") { toast("대기 문의를 남겼습니다 — 순서가 되면 알려드려요"); return; }
+    state.cart.add(id);
+    updateCartBadge();
+    cartBtn.disabled = true;
+    cartBtn.textContent = "장바구니에 담김";
+    toast("장바구니에 담았습니다");
+    return;
+  }
+  if (e.target.closest("[data-back]")) { location.hash = "#/listings"; return; }
+  const chip = e.target.closest("[data-species]");
+  if (chip) {
+    const name = chip.dataset.species;
+    location.hash = name ? "#/listings?species=" + encodeURIComponent(name) : "#/listings";
+    return;
+  }
+  const kw = e.target.closest("[data-keyword]");
+  if (kw) { state.query = kw.dataset.keyword; renderSearch(); return; }
+  const photo = e.target.closest("[data-photo]");
+  if (photo) {
+    state.photoIdx = Number(photo.dataset.photo);
+    const detail = location.hash.match(/^#\/listings\/(\w+)/);
+    if (detail) renderDetail(detail[1]);
+    return;
+  }
+  const menu = e.target.closest("[data-menu]");
+  if (menu) { toast(`'${menu.dataset.menu}'은(는) 프로토타입에서 준비 중입니다`); return; }
+  if (e.target.closest("#cart-btn")) {
+    toast(state.cart.size ? `장바구니에 ${state.cart.size}개체가 담겨 있습니다` : "장바구니가 비어 있습니다");
+  }
+});
+
+route();
+</script>
+</body>
+</html>
